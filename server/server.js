@@ -1,25 +1,20 @@
 const express = require('express')
-const app = express();
+const mongoose = require('mongoose')
 const cors = require('cors')
-const auths = require('./models/auth')
+const authRouter = require('./routes/authRoutes')
+const app = express();
 
 app.use(express.json());
 app.use(cors());
 
+app.use('/api/auth', authRouter);
+
+mongoose.connect('mongodb://127.0.0.1:27017/securisee')
+.then(() => console.log('connected to mongodb'))
+.catch((error) => console.error('failed to connect to mongodb', error))
+
+
 const port = 3000
-
-require('./config/connection');
-
-app.post('/post', async(req, res) => {
-    let auth = new auths(req.body);
-    let result = await auth.save();
-    res.send(result)
-})
-
-app.get('/', (req, res) => {
-    res.send('hello api')
-})
-
 app.listen(port, () => {
     console.log(`app listening on port ${port}`)
 })
