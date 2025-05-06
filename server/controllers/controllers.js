@@ -25,3 +25,7 @@ exports.signup = async(req, res) => {
         console.error('you have an error')
     }
 }
+
+exports.signin = async(req, res) => {
+    
+}
