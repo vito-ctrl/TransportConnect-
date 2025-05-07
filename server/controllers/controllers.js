@@ -27,5 +27,33 @@ exports.signup = async(req, res) => {
 }
 
 exports.signin = async(req, res) => {
-    
+    try{
+        const {email, password} = req.body;
+        const user = await User.findOne({email});
+
+        if(!user) return console.log('user not found')
+
+        const isPasswordValid = await bcrybt.compare(password, user.password);
+
+        if(!isPasswordValid){
+            return console.log('invalid password')
+        }
+
+        const token = jwt.sign({_id: user._id}, 'scretkey123', {
+            expiresIn: '10d',
+        });
+        res.status(200).json({
+            status: 'success',
+            token,
+            message: 'loged in successfully',
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+            }
+        })
+    } catch (error) {
+        console.error('loged in insuccess fully')
+    }
 }
