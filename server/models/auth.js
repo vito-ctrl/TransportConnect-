@@ -14,6 +14,7 @@ const authSchema = new mongoose.Schema({
         type: String,
         require: true
     },
+    
 });
 
 const user = mongoose.model('register', authSchema);

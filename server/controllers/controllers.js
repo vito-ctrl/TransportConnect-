@@ -1,12 +1,26 @@
 const User = require('../models/auth')
 const jwt = require('jsonwebtoken');
 const bcrybt = require('bcryptjs')
+// const { query } = require ('express-validator')
+// const { registerValidator } = require ('../validator/userValidator'); 
+const { validationResult } = require('express-validator');
 
 exports.signup = async(req, res) => {
     try{
+        const errors = validationResult(req);
+        if(!errors.isEmpty()) {
+            return res.status(400).json({
+                status: 'fail',
+                errors: errors.array()
+            });
+        }
+
         const user = await User.findOne({email: req.body.email});
         if(user){
-            res.error('user already exists');
+            return res.status(400).json({
+                status: 'fails',
+                massage: 'user already exists'
+            });
         }
         const hashedPassword = await bcrybt.hash(req.body.password, 12);
         const newUser = await User.create({
@@ -22,7 +36,11 @@ exports.signup = async(req, res) => {
             token
         })
     } catch(error){
-        console.error('you have an error')
+        res.status(500).json({
+            status: 'error',
+            message: 'registration failed',
+            error: error.message
+        })
     }
 }
 
@@ -30,13 +48,21 @@ exports.signin = async(req, res) => {
     try{
         const {email, password} = req.body;
         const user = await User.findOne({email});
-
-        if(!user) return console.log('user not found')
+        
+        if(!user) {
+            return res.status(404).json({
+                status: 'fail',
+                message: 'User not found'
+            });
+        }
 
         const isPasswordValid = await bcrybt.compare(password, user.password);
 
         if(!isPasswordValid){
-            return console.log('invalid password')
+            return res.status(401).json({
+                status: 'fail',
+                message: 'invalid password'
+            })
         }
 
         const token = jwt.sign({_id: user._id}, 'scretkey123', {
@@ -54,6 +80,10 @@ exports.signin = async(req, res) => {
             }
         })
     } catch (error) {
-        console.error('loged in insuccess fully')
+        res.status(500).json({
+            status: 'error',
+            message: 'Login failed',
+            error: error.message
+        });
     }
 }
