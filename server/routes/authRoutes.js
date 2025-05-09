@@ -1,6 +1,5 @@
 const express = require('express')
 const authController = require('../controllers/controllers')
-// Fix: Import from correct path
 const { registerValidator, loginValidator } = require('../validator/userValidator')
 const router = express.Router();
 

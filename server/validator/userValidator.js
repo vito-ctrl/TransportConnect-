@@ -11,10 +11,8 @@ exports.registerValidator = [
         .withMessage('invalid email')
         .normalizeEmail(),
     body('password')
-        .isLength({min : 6})
-        .withMessage('password must be at 6 character')
-        .matches(/\d/)
-        .withMessage('password must contain at least one number'),
+        .isStrongPassword()
+        .withMessage('password have to be stronger')
 ]
 
 exports.loginValidator = [

@@ -25,11 +25,17 @@ export default function Register() {
         },
         body: JSON.stringify(signup)
       });
-      if(res.ok){
-        navigate('/login')
-      }
       const data = await res.json();
+      
+      if (res.ok) {
+        localStorage.setItem("SighnToken", data.token);
+        navigate('/login'); 
+      } else {
+        // Handle error response
+        setError(data.message || "Registration failed");
+      }
       console.log(data);
+      // localStorage.setItem("SighnToken", data.token)
       if (!res.ok) {
         console.error('request error');
       }
