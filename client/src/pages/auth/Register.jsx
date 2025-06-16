@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Link, useNavigate } from 'react-router-dom';
 import * as Yup from 'yup';
 
 const Register = () => {
@@ -11,6 +12,8 @@ const Register = () => {
     passwordConfirmation: ''
   });
   const [registeredUsers, setRegisteredUsers] = useState([]);
+
+  const Navigate = useNavigate();
   // Validation schema with Yup
   const validationSchema = Yup.object({
     user: Yup.string()
@@ -42,7 +45,6 @@ const Register = () => {
       console.log('Registration data stored in state:', values);
       console.log('Current user state:', values);
       console.log('All registered users:', [...registeredUsers, { ...values, id: Date.now() }]);
-      alert('Registration successful! Data stored in state.');
       try{
         const res = await fetch('/api/auth/register', {
           method: 'POST',
@@ -55,6 +57,7 @@ const Register = () => {
             console.log('Registration successful!');
             console.log('Registration data stored in state:', values);
             resetForm();
+            Navigate('/login')
         } else {
             console.log('Registration failed:', res.status);
         }

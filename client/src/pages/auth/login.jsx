@@ -1,7 +1,15 @@
+import React, { useState } from 'react';
 import { Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
+import { Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
-const Login = () => {
+const Login = ({ onLoginSuccess }) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
+
+  const Navigate = useNavigate()
+
   // Validation schema with Yup
   const validationSchema = Yup.object({
     email: Yup.string()
@@ -12,27 +20,47 @@ const Login = () => {
       .required('Password is required')
   });
 
-  const handleSubmit = async(values, { setSubmitting, resetForm }) => {
-      console.log('Login data:', values);
-      try{
-        const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json' ,
-            },
-            body: JSON.stringify(values)
-        })
-        if (res.ok) {
-            console.log('login successful!');
-            console.log('login data stored in state:', values);
-            resetForm();
-        } else {
-            console.log('login failed:', res.status);
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    console.log('Login data:', values);
+    setLoginError('');
+    
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values)
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.status === 'success') {
+        console.log('Login successful!');
+        
+        // Store token and user data
+        localStorage.setItem('authToken', data.token);
+        localStorage.setItem('userData', JSON.stringify(data.user));
+        
+        // Call success callback if provided
+        if (onLoginSuccess) {
+          onLoginSuccess(data.user, data.token);
         }
+        Navigate('/profile')
+        resetForm();
+        
+        // You can redirect here or handle navigation
+        console.log('User data stored:', data.user);
+        
+      } else {
+        console.log('Login failed:', res.status);
+        setLoginError(data.message || 'Login failed. Please try again.');
+      }
     } catch (error) {
-        console.error('login error:', error);
+      console.error('Login error:', error);
+      setLoginError('Network error. Please check your connection and try again.');
     } finally {
-        setSubmitting(false);
+      setSubmitting(false);
     }
   };
 
@@ -43,6 +71,18 @@ const Login = () => {
           <h2 className="text-3xl font-bold text-black">Welcome Back</h2>
           <p className="mt-2 text-gray-600">Sign in to your account</p>
         </div>
+
+        {/* Display login error */}
+        {loginError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-4">
+            <div className="flex">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <p className="text-sm text-red-800">{loginError}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Formik
           initialValues={{
@@ -55,15 +95,15 @@ const Login = () => {
           {({ isSubmitting, errors, touched, handleSubmit }) => (
             <div className="mt-8 space-y-6">
               <div className="space-y-4">
-                {/* emailname Field */}
+                {/* Email Field */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-black mb-1">
-                    email
+                    Email Address
                   </label>
                   <Field
                     id="email"
                     name="email"
-                    type="text"
+                    type="email"
                     className={`w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
                       errors.email && touched.email
                         ? 'border-red-500 focus:border-red-500 bg-red-50'
@@ -83,22 +123,56 @@ const Login = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-black mb-1">
                     Password
                   </label>
-                  <Field
-                    id="password"
-                    name="password"
-                    type="password"
-                    className={`w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
-                      errors.password && touched.password
-                        ? 'border-red-500 focus:border-red-500 bg-red-50'
-                        : 'border-gray-300 focus:border-black'
-                    }`}
-                    placeholder="Enter your password"
-                  />
+                  <div className="relative">
+                    <Field
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      className={`w-full px-3 py-3 pr-10 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
+                        errors.password && touched.password
+                          ? 'border-red-500 focus:border-red-500 bg-red-50'
+                          : 'border-gray-300 focus:border-black'
+                      }`}
+                      placeholder="Enter your password"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      ) : (
+                        <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
+                      )}
+                    </button>
+                  </div>
                   <ErrorMessage
                     name="password"
                     component="div"
                     className="mt-1 text-sm text-red-600 font-medium"
                   />
+                </div>
+              </div>
+
+              {/* Remember me and Forgot password */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                    Remember me
+                  </label>
+                </div>
+
+                <div className="text-sm">
+                  <a href="#" className="font-medium text-black hover:text-gray-800 transition-colors">
+                    Forgot your password?
+                  </a>
                 </div>
               </div>
 
@@ -114,10 +188,17 @@ const Login = () => {
                   className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-all duration-200 ${
                     isSubmitting
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 focus:outline-none-2 transform hover:scale-105'
+                      : 'bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black transform hover:scale-105'
                   }`}
                 >
-                  {isSubmitting ? 'Signing in...' : 'Sign In'}
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Signing in...
+                    </div>
+                  ) : (
+                    'Sign In'
+                  )}
                 </button>
               </div>
 
