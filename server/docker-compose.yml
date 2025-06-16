@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  node-app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+      - /app/mode-modules
+    environment:
+      - port=4000
+      - MONGO_URL=mongodb://vito:pass@mongo:27017/portfolio?authSource=admin
+    depends_on:
+      - mongo
+    networks:
+      - app-networks
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    environment:
+    - MONGO_INITDB_ROOT_USERNAME=vito
+    - MONGO_INITDB_ROOT_PASSWORD=pass
+    - MONGO_INITDB_DATABASE=portfolio
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    
+volumes:
+  mongo-data:
+
+networks:
+  app-network:
+    driver: bridge
