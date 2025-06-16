@@ -1,8 +1,16 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 
 const Register = () => {
+  const [user, setUser] = useState({
+    user: '',
+    email: '',
+    phone: '',
+    password: '',
+    passwordConfirmation: ''
+  });
+  const [registeredUsers, setRegisteredUsers] = useState([]);
   // Validation schema with Yup
   const validationSchema = Yup.object({
     user: Yup.string()
@@ -24,16 +32,39 @@ const Register = () => {
       .required('Password confirmation is required')
   });
 
-  const handleSubmit = (values, { setSubmitting, resetForm }) => {
+  const handleSubmit = async(values, { setSubmitting, resetForm }) => {
+    // Store user data in state
+    setUser(values);
+    // Add to registered users array (optional - for keeping track of multiple registrations)
+    setRegisteredUsers(prev => [...prev, { ...values, id: Date.now() }]);
+    
     // Simulate API call
-    setTimeout(() => {
-      console.log('Registration data:', values);
-      alert('Registration successful!');
-      resetForm();
-      setSubmitting(false);
-    }, 1000);
+      console.log('Registration data stored in state:', values);
+      console.log('Current user state:', values);
+      console.log('All registered users:', [...registeredUsers, { ...values, id: Date.now() }]);
+      alert('Registration successful! Data stored in state.');
+      try{
+        const res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json' 
+          },
+          body: JSON.stringify(values) 
+        })
+        if (res.ok) {
+            console.log('Registration successful!');
+            console.log('Registration data stored in state:', values);
+            resetForm();
+        } else {
+            console.log('Registration failed:', res.status);
+        }
+    } catch (error) {
+        console.error('Registration error:', error);
+    } finally {
+        setSubmitting(false);
+    }
   };
-
+  
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-1 py-1">
       <div className="max-w-md w-full space-y-1">
@@ -53,7 +84,7 @@ const Register = () => {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ isSubmitting, errors, touched }) => (
+          {({ isSubmitting, errors, touched, handleSubmit }) => (
             <div className="mt-4 space-y-2">
               <div className="space-y-4">
                 {/* Username Field */}
@@ -65,7 +96,7 @@ const Register = () => {
                     id="user"
                     name="user"
                     type="text"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none  transition-colors ${
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
                       errors.user && touched.user
                         ? 'border-red-500 focus:border-red-500 bg-red-50'
                         : 'border-gray-300 focus:border-black'
@@ -88,7 +119,7 @@ const Register = () => {
                     id="email"
                     name="email"
                     type="email"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none  transition-colors ${
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
                       errors.email && touched.email
                         ? 'border-red-500 focus:border-red-500 bg-red-50'
                         : 'border-gray-300 focus:border-black'
@@ -111,7 +142,7 @@ const Register = () => {
                     id="phone"
                     name="phone"
                     type="tel"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none  transition-colors ${
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
                       errors.phone && touched.phone
                         ? 'border-red-500 focus:border-red-500 bg-red-50'
                         : 'border-gray-300 focus:border-black'
@@ -134,7 +165,7 @@ const Register = () => {
                     id="password"
                     name="password"
                     type="password"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none  transition-colors ${
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
                       errors.password && touched.password
                         ? 'border-red-500 focus:border-red-500 bg-red-50'
                         : 'border-gray-300 focus:border-black'
@@ -157,7 +188,7 @@ const Register = () => {
                     id="passwordConfirmation"
                     name="passwordConfirmation"
                     type="password"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none  transition-colors ${
+                    className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
                       errors.passwordConfirmation && touched.passwordConfirmation
                         ? 'border-red-500 focus:border-red-500 bg-red-50'
                         : 'border-gray-300 focus:border-black'
@@ -179,14 +210,12 @@ const Register = () => {
                   disabled={isSubmitting}
                   onClick={(e) => {
                     e.preventDefault();
-                    // This would normally be handled by Formik's Form component
-                    // For demo purposes, we'll simulate form submission
-                    console.log('Form would be submitted here');
+                    handleSubmit();
                   }}
                   className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-all duration-200 ${
                     isSubmitting
                       ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-black hover:bg-gray-800 focus:outline-none  ffset-2 lack transform hover:scale-105'
+                      : 'bg-black hover:bg-gray-800 focus:outline-none transform hover:scale-105'
                   }`}
                 >
                   {isSubmitting ? 'Creating Account...' : 'Create Account'}
@@ -202,6 +231,28 @@ const Register = () => {
                   </a>
                 </p>
               </div>
+
+              {/* Clear Data Button */}
+              {user.user && (
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUser({
+                        user: '',
+                        email: '',
+                        phone: '',
+                        password: '',
+                        passwordConfirmation: ''
+                      });
+                      setRegisteredUsers([]);
+                    }}
+                    className="text-sm text-gray-500 hover:text-gray-700 underline"
+                  >
+                    Clear stored data
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </Formik>

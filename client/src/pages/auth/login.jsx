@@ -4,22 +4,36 @@ import * as Yup from 'yup';
 const Login = () => {
   // Validation schema with Yup
   const validationSchema = Yup.object({
-    user: Yup.string()
-      .min(3, 'Username must be at least 3 characters')
-      .required('Username is required'),
+    email: Yup.string()
+      .email('Invalid email format')
+      .required('Email is required'),
     password: Yup.string()
       .min(6, 'Password must be at least 6 characters')
       .required('Password is required')
   });
 
-  const handleSubmit = (values, { setSubmitting, resetForm }) => {
-    // Simulate API call
-    setTimeout(() => {
+  const handleSubmit = async(values, { setSubmitting, resetForm }) => {
       console.log('Login data:', values);
-      alert('Login successful!');
-      resetForm();
-      setSubmitting(false);
-    }, 1000);
+      try{
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' ,
+            },
+            body: JSON.stringify(values)
+        })
+        if (res.ok) {
+            console.log('login successful!');
+            console.log('login data stored in state:', values);
+            resetForm();
+        } else {
+            console.log('login failed:', res.status);
+        }
+    } catch (error) {
+        console.error('login error:', error);
+    } finally {
+        setSubmitting(false);
+    }
   };
 
   return (
@@ -32,7 +46,7 @@ const Login = () => {
 
         <Formik
           initialValues={{
-            user: '',
+            email: '',
             password: ''
           }}
           validationSchema={validationSchema}
@@ -41,24 +55,24 @@ const Login = () => {
           {({ isSubmitting, errors, touched, handleSubmit }) => (
             <div className="mt-8 space-y-6">
               <div className="space-y-4">
-                {/* Username Field */}
+                {/* emailname Field */}
                 <div>
-                  <label htmlFor="user" className="block text-sm font-medium text-black mb-1">
-                    Username
+                  <label htmlFor="email" className="block text-sm font-medium text-black mb-1">
+                    email
                   </label>
                   <Field
-                    id="user"
-                    name="user"
+                    id="email"
+                    name="email"
                     type="text"
                     className={`w-full px-3 py-3 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none transition-colors ${
-                      errors.user && touched.user
+                      errors.email && touched.email
                         ? 'border-red-500 focus:border-red-500 bg-red-50'
                         : 'border-gray-300 focus:border-black'
                     }`}
-                    placeholder="Enter your username"
+                    placeholder="Enter your email"
                   />
                   <ErrorMessage
-                    name="user"
+                    name="email"
                     component="div"
                     className="mt-1 text-sm text-red-600 font-medium"
                   />
