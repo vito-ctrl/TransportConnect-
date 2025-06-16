@@ -1,11 +1,9 @@
 const User = require('../models/auth')
 const jwt = require('jsonwebtoken');
 const bcrybt = require('bcryptjs')
-// const { query } = require ('express-validator')
-// const { registerValidator } = require ('../validator/userValidator'); 
 const { validationResult } = require('express-validator');
 
-exports.signup = async(req, res) => {
+exports.register = async(req, res) => {
     try{
         const errors = validationResult(req);
         if(!errors.isEmpty()) {
@@ -27,7 +25,7 @@ exports.signup = async(req, res) => {
             ...req.body,
             password: hashedPassword,
         });
-        const token = jwt.sign({_id: newUser._id}, 'scretkey123', {
+        const token = jwt.sign({_id: newUser._id}, process.env.JWT_SECRET, {
             expiresIn: '10d',
         });
         res.status(201).json({
@@ -44,7 +42,7 @@ exports.signup = async(req, res) => {
     }
 }
 
-exports.signin = async(req, res) => {
+exports.login = async(req, res) => {
     try{
         const {email, password} = req.body;
         const user = await User.findOne({email});
@@ -65,7 +63,7 @@ exports.signin = async(req, res) => {
             })
         }
 
-        const token = jwt.sign({_id: user._id}, 'scretkey123', {
+        const token = jwt.sign({_id: user._id}, process.env.JWT_SECRET, {
             expiresIn: '10d',
         });
         res.status(200).json({
@@ -87,3 +85,36 @@ exports.signin = async(req, res) => {
         });
     }
 }
+
+exports.profile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({
+        status: 'fail',
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch profile',
+      error: error.message
+    });
+  }
+};

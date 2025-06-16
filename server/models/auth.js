@@ -14,8 +14,12 @@ const authSchema = new mongoose.Schema({
         type: String,
         require: true
     },
-    
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    }
 });
 
-const user = mongoose.model('register', authSchema);
+const user = mongoose.model('User', authSchema);
 module.exports = user
