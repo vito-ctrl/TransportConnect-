@@ -128,7 +128,7 @@ exports.profile = async (req, res) => {
       data: {
         user: {
           _id: user._id,
-          name: user.name, // Fixed: was user.user, now user.name
+          name: user.name, 
           email: user.email,
           phone: user.phone,
           role: user.role,
@@ -146,7 +146,6 @@ exports.profile = async (req, res) => {
   }
 };
 
-// Added missing profile update endpoint
 exports.updateProfile = async (req, res) => {
   try {
     const { name, email, phone } = req.body;

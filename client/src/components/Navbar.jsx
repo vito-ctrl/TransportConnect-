@@ -1,102 +1,114 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-// import { useAuth } from './AuthContext';
+import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
+import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import {UserRoundPen} from 'lucide-react'
+import vitoTransport from '../assets/Company_logo_only.png'
 
-const Navbar = () => {
-//   const { user, logout } = useAuth();
-//   const location = useLocation();
+const navigation = [
+  { name: 'Dashboard', href: '/', current: true },
+  { name: 'login', href: '/login', current: false },
+  { name: 'register', href: '/register', current: false },
+  // { name: 'Calendar', href: '#', current: false },
+]
 
-//   const handleLogout = () => {
-//     logout();
-//   };
+function classNames(...classes) {
+  return classes.filter(Boolean).join(' ')
+}
 
-//   const isActive = (path) => {
-//     return location.pathname === path;
-//   };
-
-  const navItems = [
-    { path: '/dashboard', label: 'Dashboard' },
-    { path: '/profile', label: 'Profile' },
-    // { path: '/settings', label: 'Settings' },
-  ];
-
+export default function Example() {
   return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo/Brand */}
-          <div className="flex items-center">
-            <Link to="/dashboard" className="text-xl font-bold text-gray-900">
-              MyApp
-            </Link>
+    <Disclosure as="nav" className="bg-black">
+      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+        <div className="relative flex h-16 items-center justify-between">
+          <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
+            {/* Mobile menu button*/}
+            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus focus:outline-hidden focus">
+              <span className="absolute -inset-0.5" />
+              <span className="sr-only">Open main menu</span>
+              <Bars3Icon aria-hidden="true" className="block size-6 group-data-open:hidden" />
+              <XMarkIcon aria-hidden="true" className="hidden size-6 group-data-open:block" />
+            </DisclosureButton>
           </div>
-
-          {/* Navigation Links */}
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-4">
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                //   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                //     isActive(item.path)
-                //       ? 'bg-black text-white'
-                //       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                //   }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+          <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
+            <div className="flex shrink-0 items-center">
+              <img
+                alt="Your Company"
+                src={vitoTransport}
+                className="h-30 mt-5 w-auto"
+              />
+            </div>
+            <div className="hidden sm:ml-6 sm:block">
+              <div className="flex space-x-4 mt-13">
+                {navigation.map((item) => (
+                  <a
+                    key={item.name}
+                    href={item.href}
+                    aria-current={item.current ? 'page' : undefined}
+                    className={classNames(
+                      item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                      'rounded-md px-3 py-2 text-sm font-medium',
+                    )}
+                  >
+                    {item.name}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
+          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
 
-          {/* User Menu */}
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-700 text-sm">
-              {/* Welcome, {user?.user || user?.email} */}
-            </span>
-            <button
-            //   onClick={handleLogout}
-              className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition-colors text-sm font-medium"
-            >
-              Logout
-            </button>
-          </div>
-
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button
-              type="button"
-              className="text-gray-700 hover:text-gray-900 focus:outline-none focus:text-gray-900"
-            >
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Navigation Menu (you can expand this with state management) */}
-        <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                // className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                //   isActive(item.path)
-                //     ? 'bg-black text-white'
-                //     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                // }`}
+            {/* Profile dropdown */}
+            <Menu as="div" className="relative ml-3">
+              <div>
+                <MenuButton className="relative flex rounded-full bg-gray-800 text-sm">
+                  <span className="absolute -inset-1.5" />
+                  <span className="sr-only">Open user menu</span>
+                  <UserRoundPen className='text-white'/>
+                </MenuButton>
+              </div>
+              <MenuItems
+                transition
+                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg transition focus:outline-hidden data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
               >
-                {item.label}
-              </Link>
-            ))}
+                <MenuItem>
+                  <a
+                    href="/profile"
+                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
+                  >
+                    Your Profile
+                  </a>
+                </MenuItem>
+                <MenuItem>
+                  <a
+                    href="#"
+                    className="block px-4 py-2 text-sm text-gray-700 data-focus:bg-gray-100 data-focus:outline-hidden"
+                  >
+                    Sign out
+                  </a>
+                </MenuItem>
+              </MenuItems>
+            </Menu>
           </div>
         </div>
       </div>
-    </nav>
-  );
-};
 
-export default Navbar;
+      <DisclosurePanel className="sm:hidden">
+        <div className="space-y-1 px-2 pt-2 pb-3">
+          {navigation.map((item) => (
+            <DisclosureButton
+              key={item.name}
+              as="a"
+              href={item.href}
+              aria-current={item.current ? 'page' : undefined}
+              className={classNames(
+                item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
+                'block rounded-md px-3 py-2 text-base font-medium',
+              )}
+            >
+              {item.name}
+            </DisclosureButton>
+          ))}
+        </div>
+      </DisclosurePanel>
+    </Disclosure>
+  )
+}

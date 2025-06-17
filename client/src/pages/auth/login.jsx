@@ -206,7 +206,7 @@ const Login = ({ onLoginSuccess }) => {
               <div className="text-center">
                 <p className="text-sm text-gray-600">
                   Don't have an account?{' '}
-                  <a href="#" className="font-medium text-black hover:text-gray-800 transition-colors underline">
+                  <a href="/register" className="font-medium text-black hover:text-gray-800 transition-colors underline">
                     Sign up
                   </a>
                 </p>
