@@ -1,3 +1,4 @@
+// AuthContext.jsx - Version améliorée avec gestion des rôles
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -10,6 +11,53 @@ export const useAuth = () => {
   return context;
 };
 
+// Définition des rôles et permissions
+export const ROLES = {
+  SUPER_ADMIN: 'super_admin',
+  ADMIN: 'admin',
+  MANAGER: 'manager',
+  USER: 'user',
+  GUEST: 'guest'
+};
+
+export const PERMISSIONS = {
+  READ_USERS: 'read_users',
+  WRITE_USERS: 'write_users',
+  DELETE_USERS: 'delete_users',
+  READ_REPORTS: 'read_reports',
+  WRITE_REPORTS: 'write_reports',
+  MANAGE_SETTINGS: 'manage_settings',
+  VIEW_ANALYTICS: 'view_analytics'
+};
+
+// Mapping des rôles vers les permissions
+const ROLE_PERMISSIONS = {
+  [ROLES.SUPER_ADMIN]: Object.values(PERMISSIONS),
+  [ROLES.ADMIN]: [
+    PERMISSIONS.READ_USERS,
+    PERMISSIONS.WRITE_USERS,
+    PERMISSIONS.DELETE_USERS,
+    PERMISSIONS.READ_REPORTS,
+    PERMISSIONS.WRITE_REPORTS,
+    PERMISSIONS.MANAGE_SETTINGS,
+    PERMISSIONS.VIEW_ANALYTICS
+  ],
+  [ROLES.MANAGER]: [
+    PERMISSIONS.READ_USERS,
+    PERMISSIONS.WRITE_USERS,
+    PERMISSIONS.READ_REPORTS,
+    PERMISSIONS.WRITE_REPORTS,
+    PERMISSIONS.VIEW_ANALYTICS
+  ],
+  [ROLES.USER]: [
+    PERMISSIONS.READ_REPORTS,
+    PERMISSIONS.VIEW_ANALYTICS
+  ],
+  [ROLES.GUEST]: [
+    PERMISSIONS.READ_REPORTS
+  ]
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,16 +66,19 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuthStatus = () => {
       try {
-        // Check for stored auth token or user data
         const token = localStorage.getItem('authToken');
         const userData = localStorage.getItem('userData');
         
         if (token && userData) {
-          setUser(JSON.parse(userData));
+          const parsedUser = JSON.parse(userData);
+          // Assurer que l'utilisateur a un rôle par défaut
+          if (!parsedUser.role) {
+            parsedUser.role = ROLES.USER;
+          }
+          setUser(parsedUser);
         }
       } catch (error) {
         console.error('Error checking auth status:', error);
-        // Clear invalid data
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
       } finally {
@@ -52,7 +103,11 @@ export const AuthProvider = ({ children }) => {
         const data = await response.json();
         const { user: userData, token } = data;
         
-        // Store auth data
+        // Assurer que l'utilisateur a un rôle
+        if (!userData.role) {
+          userData.role = ROLES.USER;
+        }
+        
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(userData));
         
@@ -75,14 +130,16 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify({
+          ...userData,
+          role: userData.role || ROLES.USER // Rôle par défaut
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         const { user: newUser, token } = data;
         
-        // Store auth data
         localStorage.setItem('authToken', token);
         localStorage.setItem('userData', JSON.stringify(newUser));
         
@@ -108,6 +165,64 @@ export const AuthProvider = ({ children }) => {
     return !!user;
   };
 
+  // Vérifier si l'utilisateur a un rôle spécifique
+  const hasRole = (requiredRole) => {
+    if (!user || !user.role) return false;
+    
+    // Si c'est un tableau de rôles
+    if (Array.isArray(requiredRole)) {
+      return requiredRole.includes(user.role);
+    }
+    
+    return user.role === requiredRole;
+  };
+
+  // Vérifier si l'utilisateur a une permission spécifique
+  const hasPermission = (permission) => {
+    if (!user || !user.role) return false;
+    
+    const userPermissions = ROLE_PERMISSIONS[user.role] || [];
+    
+    // Si c'est un tableau de permissions
+    if (Array.isArray(permission)) {
+      return permission.every(p => userPermissions.includes(p));
+    }
+    
+    return userPermissions.includes(permission);
+  };
+
+  // Vérifier si l'utilisateur a au moins une des permissions
+  const hasAnyPermission = (permissions) => {
+    if (!user || !user.role) return false;
+    
+    const userPermissions = ROLE_PERMISSIONS[user.role] || [];
+    return permissions.some(p => userPermissions.includes(p));
+  };
+
+  // Obtenir toutes les permissions de l'utilisateur
+  const getUserPermissions = () => {
+    if (!user || !user.role) return [];
+    return ROLE_PERMISSIONS[user.role] || [];
+  };
+
+  // Vérifier la hiérarchie des rôles
+  const hasRoleOrHigher = (minimumRole) => {
+    if (!user || !user.role) return false;
+    
+    const roleHierarchy = [
+      ROLES.GUEST,
+      ROLES.USER,
+      ROLES.MANAGER,
+      ROLES.ADMIN,
+      ROLES.SUPER_ADMIN
+    ];
+    
+    const userRoleIndex = roleHierarchy.indexOf(user.role);
+    const requiredRoleIndex = roleHierarchy.indexOf(minimumRole);
+    
+    return userRoleIndex >= requiredRoleIndex;
+  };
+
   const value = {
     user,
     isLoading,
@@ -115,6 +230,14 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated,
+    hasRole,
+    hasPermission,
+    hasAnyPermission,
+    hasRoleOrHigher,
+    getUserPermissions,
+    // Constantes exportées pour faciliter l'utilisation
+    ROLES,
+    PERMISSIONS
   };
 
   return (

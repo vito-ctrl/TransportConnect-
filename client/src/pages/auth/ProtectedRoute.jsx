@@ -1,3 +1,4 @@
+// ProtectedRoute.jsx - Protection basique par authentification
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../components/AuthContext';
@@ -6,7 +7,7 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  // Show loading spinner while checking authentication
+  // Afficher le spinner de chargement
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -15,12 +16,12 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
-  // If not authenticated, redirect to login with the current location
+  // Rediriger vers login si pas authentifié
   if (!isAuthenticated()) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If authenticated, render the protected component
+  // Si authentifié, rendre le composant enfant
   return children;
 };
 

@@ -1,380 +1,362 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, Shield, Calendar, Edit3, Save, X, Loader2, Phone } from 'lucide-react';
+// Profile.jsx - Composant de profil utilisateur
+import React, { useState } from 'react';
+import { useAuth } from '../components/AuthContext';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import * as Yup from 'yup';
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  Shield, 
+  Edit, 
+  Save, 
+  X,
+  Eye,
+  Calendar,
+  MapPin
+} from 'lucide-react';
 
-export default function Profile() {
-  const [profile, setProfile] = useState({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const Profile = () => {
+  const { user, getUserPermissions, ROLES } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({});
-  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+  
+  const userPermissions = getUserPermissions();
 
-  // Initialize profile from localStorage if available
-  useEffect(() => {
-    const storedUser = localStorage.getItem('userData');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setProfile(userData);
-        setEditForm(userData);
-      } catch (err) {
-        console.error('Error parsing stored user data:', err);
-      }
-    }
-    fetchProfile();
-  }, []);
+  const validationSchema = Yup.object({
+    username: Yup.string()
+      .min(3, 'Le nom d\'utilisateur doit contenir au moins 3 caractères')
+      .max(20, 'Le nom d\'utilisateur doit contenir moins de 20 caractères')
+      .required('Le nom d\'utilisateur est requis'),
+    email: Yup.string()
+      .email('Format d\'email invalide')
+      .required('L\'email est requis'),
+    phone: Yup.string()
+      .matches(/^[\+]?[1-9][\d]{0,15}$/, 'Numéro de téléphone invalide'),
+    firstName: Yup.string()
+      .max(50, 'Le prénom doit contenir moins de 50 caractères'),
+    lastName: Yup.string()
+      .max(50, 'Le nom de famille doit contenir moins de 50 caractères'),
+    bio: Yup.string()
+      .max(500, 'La biographie doit contenir moins de 500 caractères')
+  });
 
-  const fetchProfile = async () => {
+  const handleSubmit = async (values, { setSubmitting }) => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('authToken');
+      // Simuler une API call
+      console.log('Updating profile:', values);
       
-      if (!token) {
-        setError('No authentication token found. Please login again.');
-        return;
-      }
+      // Ici vous feriez un appel API réel
+      // const response = await fetch('/api/user/profile', {
+      //   method: 'PUT',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+      //   },
+      //   body: JSON.stringify(values)
+      // });
       
-      const response = await fetch('/api/auth/profile', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      // Simuler un délai
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (data.status === 'success') {
-        setProfile(data.data.user);
-        setEditForm(data.data.user);
-        setError('');
-      } else {
-        setError(data.message || 'Failed to fetch profile');
-        if (response.status === 401) {
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userData');
-          setError('Session expired. Please login again.');
-        }
-      }
-    } catch (err) {
-      setError('Network error. Please try again.');
-      console.error('Profile fetch error:', err);
+      setUpdateSuccess(true);
+      setIsEditing(false);
+      
+      // Cacher le message de succès après 3 secondes
+      setTimeout(() => setUpdateSuccess(false), 3000);
+      
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setEditForm({ ...profile });
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setEditForm({ ...profile });
-    setError('');
-  };
-
-  const handleSave = async () => {
-    try {
-      setUpdateLoading(true);
-      const token = localStorage.getItem('authToken');
-      
-      if (!token) {
-        setError('No authentication token found. Please login again.');
-        return;
-      }
-      
-      const response = await fetch('/api/auth/profile', {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: editForm.name,
-          email: editForm.email,
-          phone: editForm.phone,
-        }),
-      });
-
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        setProfile(data.data.user);
-        localStorage.setItem('userData', JSON.stringify(data.data.user));
-        setIsEditing(false);
-        setError('');
-        
-        // Show success message briefly
-        const successMsg = 'Profile updated successfully!';
-        setError(''); // Clear any previous errors
-        setTimeout(() => {
-          // You could add a success state here if needed
-        }, 3000);
-        
-      } else {
-        setError(data.message || 'Failed to update profile');
-      }
-    } catch (err) {
-      setError('Network error. Please try again.');
-      console.error('Profile update error:', err);
-    } finally {
-      setUpdateLoading(false);
-    }
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
   };
 
   const getRoleBadgeColor = (role) => {
-    switch (role?.toLowerCase()) {
-      case 'admin':
+    switch (role) {
+      case ROLES.SUPER_ADMIN:
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case ROLES.ADMIN:
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'driver':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'sender':
+      case ROLES.MANAGER:
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case ROLES.USER:
         return 'bg-blue-100 text-blue-800 border-blue-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Loading profile...</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !profile._id) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-          <div className="text-red-500 mb-4">
-            <X className="h-12 w-12 mx-auto" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={fetchProfile}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="flex">
-              <X className="h-5 w-5 text-red-400" />
-              <div className="ml-3">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
+        {/* Header */}
+        <div className="bg-white shadow rounded-lg mb-8">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Mon Profil</h1>
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                  isEditing
+                    ? 'text-gray-700 bg-gray-200 hover:bg-gray-300 focus:ring-gray-500'
+                    : 'text-white bg-black hover:bg-gray-800 focus:ring-black'
+                }`}
+              >
+                {isEditing ? (
+                  <>
+                    <X className="h-4 w-4 mr-2" />
+                    Annuler
+                  </>
+                ) : (
+                  <>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Modifier
+                  </>
+                )}
+              </button>
             </div>
           </div>
-        )}
 
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 h-32 rounded-t-lg"></div>
-          <div className="relative px-6 pb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="relative -mt-16">
-                  <div className="w-24 h-24 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                    <User className="h-12 w-12 text-gray-400" />
-                  </div>
+          {/* Success Message */}
+          {updateSuccess && (
+            <div className="px-6 py-3 bg-green-50 border-l-4 border-green-400">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Save className="h-5 w-5 text-green-400" />
                 </div>
-                <div className="ml-6 mt-4">
-                  <h1 className="text-2xl font-bold text-gray-900">{profile.name || 'Unknown User'}</h1>
-                  <p className="text-gray-600">{profile.email || 'No email'}</p>
+                <div className="ml-3">
+                  <p className="text-sm text-green-700">
+                    Profil mis à jour avec succès !
+                  </p>
                 </div>
-              </div>
-              <div className="mt-4">
-                {!isEditing ? (
-                  <button
-                    onClick={handleEdit}
-                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    <span>Edit Profile</span>
-                  </button>
-                ) : (
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleSave}
-                      disabled={updateLoading}
-                      className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {updateLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4" />
-                      )}
-                      <span>{updateLoading ? 'Saving...' : 'Save'}</span>
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      disabled={updateLoading}
-                      className="flex items-center space-x-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50"
-                    >
-                      <X className="h-4 w-4" />
-                      <span>Cancel</span>
-                    </button>
-                  </div>
-                )}
               </div>
             </div>
+          )}
+
+          <div className="px-6 py-6">
+            <Formik
+              initialValues={{
+                username: user?.username || user?.user || '',
+                email: user?.email || '',
+                phone: user?.phone || '',
+                firstName: user?.firstName || '',
+                lastName: user?.lastName || '',
+                bio: user?.bio || ''
+              }}
+              validationSchema={validationSchema}
+              onSubmit={handleSubmit}
+              enableReinitialize
+            >
+              {({ isSubmitting }) => (
+                <Form className="space-y-6">
+                  {/* Profile Picture and Role */}
+                  <div className="flex items-center space-x-6">
+                    <div className="flex-shrink-0">
+                      <div className="h-20 w-20 bg-gray-300 rounded-full flex items-center justify-center">
+                        <User className="h-10 w-10 text-gray-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900">
+                        {user?.username || user?.user || 'Utilisateur'}
+                      </h3>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Shield className="h-4 w-4 text-gray-400" />
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getRoleBadgeColor(user?.role)}`}>
+                          {user?.role || 'Non défini'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Form Fields */}
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                    {/* Username */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <User className="inline h-4 w-4 mr-1" />
+                        Nom d'utilisateur
+                      </label>
+                      <Field
+                        name="username"
+                        type="text"
+                        disabled={!isEditing}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black ${
+                          !isEditing ? 'bg-gray-50 text-gray-500' : ''
+                        }`}
+                      />
+                      <ErrorMessage name="username" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+
+                    {/* Email */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <Mail className="inline h-4 w-4 mr-1" />
+                        Email
+                      </label>
+                      <Field
+                        name="email"
+                        type="email"
+                        disabled={!isEditing}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black ${
+                          !isEditing ? 'bg-gray-50 text-gray-500' : ''
+                        }`}
+                      />
+                      <ErrorMessage name="email" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+
+                    {/* Phone */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <Phone className="inline h-4 w-4 mr-1" />
+                        Téléphone
+                      </label>
+                      <Field
+                        name="phone"
+                        type="tel"
+                        disabled={!isEditing}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black ${
+                          !isEditing ? 'bg-gray-50 text-gray-500' : ''
+                        }`}
+                        placeholder="Numéro de téléphone"
+                      />
+                      <ErrorMessage name="phone" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+
+                    {/* First Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Prénom
+                      </label>
+                      <Field
+                        name="firstName"
+                        type="text"
+                        disabled={!isEditing}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black ${
+                          !isEditing ? 'bg-gray-50 text-gray-500' : ''
+                        }`}
+                        placeholder="Votre prénom"
+                      />
+                      <ErrorMessage name="firstName" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+
+                    {/* Last Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nom de famille
+                      </label>
+                      <Field
+                        name="lastName"
+                        type="text"
+                        disabled={!isEditing}
+                        className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black ${
+                          !isEditing ? 'bg-gray-50 text-gray-500' : ''
+                        }`}
+                        placeholder="Votre nom de famille"
+                      />
+                      <ErrorMessage name="lastName" component="div" className="mt-1 text-sm text-red-600" />
+                    </div>
+                  </div>
+
+                  {/* Bio */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Biographie
+                    </label>
+                    <Field
+                      as="textarea"
+                      name="bio"
+                      rows={4}
+                      disabled={!isEditing}
+                      className={`w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-black focus:border-black ${
+                        !isEditing ? 'bg-gray-50 text-gray-500' : ''
+                      }`}
+                      placeholder="Parlez-nous de vous..."
+                    />
+                    <ErrorMessage name="bio" component="div" className="mt-1 text-sm text-red-600" />
+                  </div>
+
+                  {/* Save Button */}
+                  {isEditing && (
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Sauvegarde...
+                          </>
+                        ) : (
+                          <>
+                            <Save className="h-4 w-4 mr-2" />
+                            Sauvegarder
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </Form>
+              )}
+            </Formik>
           </div>
         </div>
 
-        {/* Profile Details */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Info */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-6">Profile Information</h2>
-              
-              <div className="space-y-6">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <User className="h-4 w-4 inline mr-2" />
-                    Full Name
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="text"
-                      value={editForm.name || ''}
-                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter your full name"
-                    />
-                  ) : (
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profile.name || 'Not provided'}</p>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Mail className="h-4 w-4 inline mr-2" />
-                    Email Address
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      value={editForm.email || ''}
-                      onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter your email"
-                    />
-                  ) : (
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profile.email || 'Not provided'}</p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Phone className="h-4 w-4 inline mr-2" />
-                    Phone Number
-                  </label>
-                  {isEditing ? (
-                    <input
-                      type="tel"
-                      value={editForm.phone || ''}
-                      onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter your phone number"
-                    />
-                  ) : (
-                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{profile.phone || 'Not provided'}</p>
-                  )}
-                </div>
-
-                {/* Role */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Shield className="h-4 w-4 inline mr-2" />
-                    Role
-                  </label>
-                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getRoleBadgeColor(profile.role)}`}>
-                    {profile.role || 'User'}
-                  </span>
-                </div>
-              </div>
-            </div>
+        {/* Permissions Card */}
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">
+              Permissions et Accès
+            </h2>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Account Info */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Information</h3>
-              
-              <div className="space-y-4">
-                <div>
-                  <span className="text-sm font-medium text-gray-700">User ID</span>
-                  <p className="text-sm text-gray-600 font-mono mt-1 break-all">{profile._id || 'N/A'}</p>
-                </div>
-                
-                <div>
-                  <span className="text-sm font-medium text-gray-700 flex items-center">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    Member Since
-                  </span>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {formatDate(profile.createdAt)}
-                  </p>
-                </div>
-                
-                {profile.updatedAt && (
-                  <div>
-                    <span className="text-sm font-medium text-gray-700">Last Updated</span>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {formatDate(profile.updatedAt)}
-                    </p>
+          <div className="px-6 py-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {/* Role Info */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-3">
+                  Informations de rôle
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Shield className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-sm text-gray-600">
+                      Rôle actuel: <span className="font-medium">{user?.role || 'Non défini'}</span>
+                    </span>
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Account Status</span>
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                    {profile.isActive !== false ? 'Active' : 'Inactive'}
-                  </span>
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-sm text-gray-600">
+                      Membre depuis: <span className="font-medium">
+                        {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Non disponible'}
+                      </span>
+                    </span>
+                  </div>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Profile Completion</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {Math.round(((profile.name ? 1 : 0) + (profile.email ? 1 : 0) + (profile.phone ? 1 : 0)) / 3 * 100)}%
-                  </span>
+              </div>
+
+              {/* Permissions List */}
+              <div>
+                <h3 className="text-sm font-medium text-gray-900 mb-3">
+                  Permissions ({userPermissions.length})
+                </h3>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {userPermissions.length > 0 ? (
+                    userPermissions.map((permission, index) => (
+                      <div key={index} className="flex items-center">
+                        <Eye className="h-3 w-3 text-green-500 mr-2" />
+                        <span className="text-xs text-gray-600">
+                          {permission.replace(/_/g, ' ').toLowerCase()}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-gray-500">
+                      Aucune permission spéciale assignée
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -383,4 +365,6 @@ export default function Profile() {
       </div>
     </div>
   );
-}
+};
+
+export default Profile;

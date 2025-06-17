@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Formik, Field, ErrorMessage } from 'formik';
+import { Formik, Field, ErrorMessage, Form } from 'formik';
 import * as Yup from 'yup';
 import { Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../components/AuthContext'; 
 
 const Login = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
 
-  const Navigate = useNavigate()
+  const { login } = useAuth();
+
+  const navigate = useNavigate(); // Fixed: lowercase 'navigate'
 
   // Validation schema with Yup
   const validationSchema = Yup.object({
@@ -32,29 +35,23 @@ const Login = ({ onLoginSuccess }) => {
         },
         body: JSON.stringify(values)
       });
-
-      const data = await res.json();
-
-      if (res.ok && data.status === 'success') {
+      
+      const result = await login(values);
+      
+      if (result.success) {
         console.log('Login successful!');
-        
-        // Store token and user data
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('userData', JSON.stringify(data.user));
         
         // Call success callback if provided
         if (onLoginSuccess) {
-          onLoginSuccess(data.user, data.token);
+          onLoginSuccess(result.user);
         }
-        Navigate('/profile')
-        resetForm();
         
-        // You can redirect here or handle navigation
-        console.log('User data stored:', data.user);
+        resetForm();
+        navigate('/dashboard');
         
       } else {
-        console.log('Login failed:', res.status);
-        setLoginError(data.message || 'Login failed. Please try again.');
+        console.log('Login failed');
+        setLoginError(result.error || 'Login failed. Please try again.');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -92,8 +89,8 @@ const Login = ({ onLoginSuccess }) => {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({ isSubmitting, errors, touched, handleSubmit }) => (
-            <div className="mt-8 space-y-6">
+          {({ isSubmitting, errors, touched }) => (
+            <Form className="mt-8 space-y-6"> {/* Fixed: Use Formik's Form component */}
               <div className="space-y-4">
                 {/* Email Field */}
                 <div>
@@ -179,12 +176,8 @@ const Login = ({ onLoginSuccess }) => {
               {/* Submit Button */}
               <div>
                 <button
-                  type="submit"
+                  type="submit" // Fixed: Just use type="submit"
                   disabled={isSubmitting}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                  }}
                   className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white transition-all duration-200 ${
                     isSubmitting
                       ? 'bg-gray-400 cursor-not-allowed'
@@ -259,7 +252,7 @@ const Login = ({ onLoginSuccess }) => {
                   <span className="ml-2">Facebook</span>
                 </button>
               </div>
-            </div>
+            </Form>
           )}
         </Formik>
       </div>
