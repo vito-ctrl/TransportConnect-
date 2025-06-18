@@ -56,9 +56,6 @@ exports.getAllTrajets = async (req, res) => {
   }
 };
 
-// @desc    Get a single trip by ID
-// @route   GET /api/trajets/:id
-// @access  Public
 exports.getTrajetById = async (req, res) => {
   try {
     const trajet = await Trajet.findById(req.params.id).populate('driver', 'name email');
@@ -72,35 +69,29 @@ exports.getTrajetById = async (req, res) => {
   }
 };
 
-// @desc    Update a trip (only by the driver who created it)
-// @route   PUT /api/trajets/:id
-// @access  Private (Driver only)
-exports.updateTrajet = async (req, res) => {
+exports.getMyTrajets = async (req, res) => {
   try {
-    const trajet = await Trajet.findById(req.params.id);
-
-    if (!trajet) {
-      return res.status(404).json({ status: 'fail', message: 'Trip not found' });
-    }
-
-    if (trajet.driver.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ status: 'fail', message: 'Unauthorized' });
-    }
-
-    const updates = req.body;
-    Object.assign(trajet, updates);
-
-    await trajet.save();
-    res.status(200).json({ status: 'success', data: trajet });
+    // Get the current user's ID from the auth middleware
+    const driverId = req.user._id;
+    
+    const trajets = await Trajet.find({ driver: driverId })
+      .populate('driver', 'name email')
+      .sort({ departureDate: -1 }); // Sort by most recent first
+    
+    res.status(200).json({ 
+      status: 'success', 
+      count: trajets.length,
+      data: trajets 
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ status: 'error', message: 'Server Error' });
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'Server Error' 
+    });
   }
 };
 
-// @desc    Delete a trip (driver or admin)
-// @route   DELETE /api/trajets/:id
-// @access  Private
 exports.deleteTrajet = async (req, res) => {
   try {
     const trajet = await Trajet.findById(req.params.id);

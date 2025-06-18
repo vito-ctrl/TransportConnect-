@@ -9,9 +9,10 @@ import Register from './pages/auth/Register';
 import Login from './pages/auth/login';
 import Dashboard from './pages/Dashbord';
 import Profile from './pages/Profile';
-import CreateTrajetForm from './pages/traject/Traject'; // Import the trajet form
+import TrajetsPage from './pages/traject/TrajetsPage'
 import './App.css';
 import Navbar from './components/Navbar';
+import MyTrajets from './pages/traject/MyTrajets';
 
 // Composants d'exemple pour démontrer la protection par rôles
 const AdminPanel = () => (
@@ -56,19 +57,6 @@ const RequestsPage = () => (
           </div>
         </div>
       </div>
-    </div>
-  </div>
-);
-
-// Wrapper pour la page trajets avec un titre
-const TrajetsPage = () => (
-  <div className="min-h-screen bg-gray-50 py-8">
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestion des Trajets</h1>
-        <p className="text-gray-600">Créez et gérez vos trajets de transport.</p>
-      </div>
-      <CreateTrajetForm />
     </div>
   </div>
 );
@@ -128,6 +116,18 @@ function App() {
                   showFallback={true}
                 >
                   <TrajetsPage />
+                </RoleProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/MyTrajets" 
+              element={
+                <RoleProtectedRoute 
+                  requiredRole={ROLES.DRIVER}
+                  showFallback={true}
+                >
+                  <MyTrajets />
                 </RoleProtectedRoute>
               } 
             />

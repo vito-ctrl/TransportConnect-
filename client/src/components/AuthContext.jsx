@@ -1,4 +1,3 @@
-// AuthContext.jsx - Simplified version with role-based access only
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -11,7 +10,7 @@ export const useAuth = () => {
   return context;
 };
 
-// Définition des rôles
+// Définition des roles
 export const ROLES = {
   ADMIN: 'admin',
   DRIVER: 'driver',
