@@ -1,4 +1,4 @@
-// AuthContext.jsx - Version améliorée avec gestion des rôles
+// AuthContext.jsx - Simplified version with role-based access only
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const AuthContext = createContext();
@@ -11,51 +11,12 @@ export const useAuth = () => {
   return context;
 };
 
-// Définition des rôles et permissions
+// Définition des rôles
 export const ROLES = {
-  SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',
-  MANAGER: 'manager',
-  USER: 'user',
+  DRIVER: 'driver',
+  SENDER: 'sender',
   GUEST: 'guest'
-};
-
-export const PERMISSIONS = {
-  READ_USERS: 'read_users',
-  WRITE_USERS: 'write_users',
-  DELETE_USERS: 'delete_users',
-  READ_REPORTS: 'read_reports',
-  WRITE_REPORTS: 'write_reports',
-  MANAGE_SETTINGS: 'manage_settings',
-  VIEW_ANALYTICS: 'view_analytics'
-};
-
-// Mapping des rôles vers les permissions
-const ROLE_PERMISSIONS = {
-  [ROLES.SUPER_ADMIN]: Object.values(PERMISSIONS),
-  [ROLES.ADMIN]: [
-    PERMISSIONS.READ_USERS,
-    PERMISSIONS.WRITE_USERS,
-    PERMISSIONS.DELETE_USERS,
-    PERMISSIONS.READ_REPORTS,
-    PERMISSIONS.WRITE_REPORTS,
-    PERMISSIONS.MANAGE_SETTINGS,
-    PERMISSIONS.VIEW_ANALYTICS
-  ],
-  [ROLES.MANAGER]: [
-    PERMISSIONS.READ_USERS,
-    PERMISSIONS.WRITE_USERS,
-    PERMISSIONS.READ_REPORTS,
-    PERMISSIONS.WRITE_REPORTS,
-    PERMISSIONS.VIEW_ANALYTICS
-  ],
-  [ROLES.USER]: [
-    PERMISSIONS.READ_REPORTS,
-    PERMISSIONS.VIEW_ANALYTICS
-  ],
-  [ROLES.GUEST]: [
-    PERMISSIONS.READ_REPORTS
-  ]
 };
 
 export const AuthProvider = ({ children }) => {
@@ -73,7 +34,7 @@ export const AuthProvider = ({ children }) => {
           const parsedUser = JSON.parse(userData);
           // Assurer que l'utilisateur a un rôle par défaut
           if (!parsedUser.role) {
-            parsedUser.role = ROLES.USER;
+            parsedUser.role = ROLES.GUEST;
           }
           setUser(parsedUser);
         }
@@ -105,7 +66,7 @@ export const AuthProvider = ({ children }) => {
         
         // Assurer que l'utilisateur a un rôle
         if (!userData.role) {
-          userData.role = ROLES.USER;
+          userData.role = ROLES.GUEST;
         }
         
         localStorage.setItem('authToken', token);
@@ -132,7 +93,7 @@ export const AuthProvider = ({ children }) => {
         },
         body: JSON.stringify({
           ...userData,
-          role: userData.role || ROLES.USER // Rôle par défaut
+          role: userData.role || ROLES.GUEST // Rôle par défaut
         }),
       });
 
@@ -177,50 +138,19 @@ export const AuthProvider = ({ children }) => {
     return user.role === requiredRole;
   };
 
-  // Vérifier si l'utilisateur a une permission spécifique
-  const hasPermission = (permission) => {
-    if (!user || !user.role) return false;
-    
-    const userPermissions = ROLE_PERMISSIONS[user.role] || [];
-    
-    // Si c'est un tableau de permissions
-    if (Array.isArray(permission)) {
-      return permission.every(p => userPermissions.includes(p));
-    }
-    
-    return userPermissions.includes(permission);
+  // Vérifier si l'utilisateur est un conducteur
+  const isDriver = () => {
+    return hasRole(ROLES.DRIVER);
   };
 
-  // Vérifier si l'utilisateur a au moins une des permissions
-  const hasAnyPermission = (permissions) => {
-    if (!user || !user.role) return false;
-    
-    const userPermissions = ROLE_PERMISSIONS[user.role] || [];
-    return permissions.some(p => userPermissions.includes(p));
+  // Vérifier si l'utilisateur est un admin
+  const isAdmin = () => {
+    return hasRole(ROLES.ADMIN);
   };
 
-  // Obtenir toutes les permissions de l'utilisateur
-  const getUserPermissions = () => {
-    if (!user || !user.role) return [];
-    return ROLE_PERMISSIONS[user.role] || [];
-  };
-
-  // Vérifier la hiérarchie des rôles
-  const hasRoleOrHigher = (minimumRole) => {
-    if (!user || !user.role) return false;
-    
-    const roleHierarchy = [
-      ROLES.GUEST,
-      ROLES.USER,
-      ROLES.MANAGER,
-      ROLES.ADMIN,
-      ROLES.SUPER_ADMIN
-    ];
-    
-    const userRoleIndex = roleHierarchy.indexOf(user.role);
-    const requiredRoleIndex = roleHierarchy.indexOf(minimumRole);
-    
-    return userRoleIndex >= requiredRoleIndex;
+  // Vérifier si l'utilisateur est un expéditeur
+  const isSender = () => {
+    return hasRole(ROLES.SENDER);
   };
 
   const value = {
@@ -231,13 +161,11 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAuthenticated,
     hasRole,
-    hasPermission,
-    hasAnyPermission,
-    hasRoleOrHigher,
-    getUserPermissions,
+    isDriver,
+    isAdmin,
+    isSender,
     // Constantes exportées pour faciliter l'utilisation
-    ROLES,
-    PERMISSIONS
+    ROLES
   };
 
   return (

@@ -1,7 +1,7 @@
-// App.jsx - Version avec protection par rôles
+// App.jsx - Simplified version with role-based protection
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, ROLES, PERMISSIONS } from './components/AuthContext';
+import { AuthProvider, ROLES } from './components/AuthContext';
 import ProtectedRoute from './pages/auth/ProtectedRoute';
 import RoleProtectedRoute, { UnauthorizedPage } from './pages/auth/RoleProtectedRoute';
 import AuthRedirect from './pages/auth/AuthRedirect';
@@ -9,6 +9,7 @@ import Register from './pages/auth/Register';
 import Login from './pages/auth/login';
 import Dashboard from './pages/Dashbord';
 import Profile from './pages/Profile';
+import CreateTrajetForm from './pages/traject/Traject'; // Import the trajet form
 import './App.css';
 import Navbar from './components/Navbar';
 
@@ -38,20 +39,20 @@ const AdminPanel = () => (
   </div>
 );
 
-const ManagerDashboard = () => (
+const RequestsPage = () => (
   <div className="min-h-screen bg-gray-50 py-8">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="bg-white shadow rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Tableau de bord Manager</h1>
-        <p className="text-gray-600 mb-6">Interface pour les managers et superviseurs.</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Mes Demandes</h1>
+        <p className="text-gray-600 mb-6">Gérez vos demandes d'expédition.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-purple-800">Gestion d'équipe</h3>
-            <p className="text-purple-600 text-sm">Superviser et gérer votre équipe</p>
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-green-800">Nouvelle demande</h3>
+            <p className="text-green-600 text-sm">Créer une nouvelle demande d'expédition</p>
           </div>
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-orange-800">Rapports de performance</h3>
-            <p className="text-orange-600 text-sm">Analyser les performances de l'équipe</p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="text-lg font-semibold text-blue-800">Demandes en cours</h3>
+            <p className="text-blue-600 text-sm">Suivre l'état de vos demandes</p>
           </div>
         </div>
       </div>
@@ -59,53 +60,15 @@ const ManagerDashboard = () => (
   </div>
 );
 
-// const UserProfile = () => (
-//   <div className="min-h-screen bg-gray-50 py-8">
-//     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-//       <div className="bg-white shadow rounded-lg p-6">
-//         <h1 className="text-2xl font-bold text-gray-900 mb-4">Profil Utilisateur</h1>
-//         <p className="text-gray-600">Accessible à tous les utilisateurs authentifiés.</p>
-//       </div>
-//     </div>
-//   </div>
-// );
-
-const Analytics = () => (
-  <div className="min-h-screen bg-gray-50 py-8">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="bg-white shadow rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Analytics</h1>
-        <p className="text-gray-600 mb-6">Statistiques et analyses (Permission: VIEW_ANALYTICS requise).</p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-gray-800">Metric {i}</h3>
-              <p className="text-2xl font-bold text-blue-600">1,234</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-const Settings = () => (
+// Wrapper pour la page trajets avec un titre
+const TrajetsPage = () => (
   <div className="min-h-screen bg-gray-50 py-8">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="bg-white shadow rounded-lg p-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Paramètres</h1>
-        <p className="text-gray-600 mb-6">Configuration (Permission: MANAGE_SETTINGS requise).</p>
-        <div className="space-y-4">
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-800">Paramètres généraux</h3>
-            <p className="text-gray-600">Configuration de base de l'application</p>
-          </div>
-          <div className="border border-gray-200 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-gray-800">Sécurité</h3>
-            <p className="text-gray-600">Paramètres de sécurité et authentification</p>
-          </div>
-        </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestion des Trajets</h1>
+        <p className="text-gray-600">Créez et gérez vos trajets de transport.</p>
       </div>
+      <CreateTrajetForm />
     </div>
   </div>
 );
@@ -137,6 +100,7 @@ function App() {
             
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             
+            {/* Routes protégées par authentification */}
             <Route 
               path="/dashboard" 
               element={
@@ -155,68 +119,41 @@ function App() {
               } 
             />
             
-            {/* Routes protégées par rôles spécifiques */}
+            {/* Route trajets - Réservée aux conducteurs uniquement */}
+            <Route 
+              path="/trajets" 
+              element={
+                <RoleProtectedRoute 
+                  requiredRole={ROLES.DRIVER}
+                  showFallback={true}
+                >
+                  <TrajetsPage />
+                </RoleProtectedRoute>
+              } 
+            />
+            
+            {/* Route demandes - Réservée aux expéditeurs */}
+            <Route 
+              path="/requests" 
+              element={
+                <RoleProtectedRoute 
+                  requiredRole={ROLES.SENDER}
+                  showFallback={true}
+                >
+                  <RequestsPage />
+                </RoleProtectedRoute>
+              } 
+            />
+            
+            {/* Route admin - Réservée aux administrateurs */}
             <Route 
               path="/admin" 
               element={
                 <RoleProtectedRoute 
-                  requiredRoles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]}
-                  showFallback={false}
+                  requiredRole={ROLES.ADMIN}
+                  showFallback={true}
                 >
                   <AdminPanel />
-                </RoleProtectedRoute>
-              } 
-            />
-            
-            {/* Route avec rôle minimum requis */}
-            <Route 
-              path="/manager" 
-              element={
-                <RoleProtectedRoute 
-                  minimumRole={ROLES.MANAGER}
-                  showFallback={false}
-                >
-                  <ManagerDashboard />
-                </RoleProtectedRoute>
-              } 
-            />
-            
-            {/* Routes protégées par permissions */}
-            <Route 
-              path="/analytics" 
-              element={
-                <RoleProtectedRoute 
-                  requiredPermission={PERMISSIONS.VIEW_ANALYTICS}
-                >
-                  <Analytics />
-                </RoleProtectedRoute>
-              } 
-            />
-            
-            <Route 
-              path="/settings" 
-              element={
-                <RoleProtectedRoute 
-                  requiredPermission={PERMISSIONS.MANAGE_SETTINGS}
-                >
-                  <Settings />
-                </RoleProtectedRoute>
-              } 
-            />
-            
-            {/* Route avec permissions multiples (AND logic) */}
-            <Route 
-              path="/user-management" 
-              element={
-                <RoleProtectedRoute 
-                  requiredPermissions={[PERMISSIONS.READ_USERS, PERMISSIONS.WRITE_USERS]}
-                >
-                  <div className="min-h-screen flex items-center justify-center">
-                    <div className="text-center">
-                      <h1 className="text-2xl font-bold">Gestion des utilisateurs</h1>
-                      <p className="text-gray-600">Nécessite les permissions READ_USERS et WRITE_USERS</p>
-                    </div>
-                  </div>
                 </RoleProtectedRoute>
               } 
             />

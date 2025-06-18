@@ -1,6 +1,6 @@
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
-import { UserRoundPen, LogOut, User, Settings, Shield, BarChart3, Users } from 'lucide-react';
+import { UserRoundPen, LogOut, User, Settings, Shield, Truck, Package } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import vitoTransport from '../assets/Company_logo_only.png';
@@ -10,7 +10,7 @@ function classNames(...classes) {
 }
 
 export default function Navbar() {
-  const { isAuthenticated, user, logout, hasRole, hasRoleOrHigher, hasPermission, ROLES, PERMISSIONS } = useAuth();
+  const { isAuthenticated, user, logout, hasRole, isDriver, isAdmin, ROLES } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -34,43 +34,33 @@ export default function Navbar() {
       { name: 'Profil', href: '/profile', current: location.pathname === '/profile' },
     ];
 
-    // Add Analytics if user has permission
-    if (hasPermission(PERMISSIONS.VIEW_ANALYTICS)) {
+    // Add Trajet page only for drivers
+    if (isDriver()) {
       navItems.push({ 
-        name: 'Analytics', 
-        href: '/analytics', 
-        current: location.pathname === '/analytics',
-        icon: BarChart3
+        name: 'Mes Trajets', 
+        href: '/trajets', 
+        current: location.pathname === '/trajets',
+        icon: Truck
       });
     }
 
-    // Add Manager Dashboard for managers and above
-    if (hasRoleOrHigher(ROLES.MANAGER)) {
+    // Add Requests page for senders
+    if (hasRole(ROLES.SENDER)) {
       navItems.push({ 
-        name: 'Manager', 
-        href: '/manager', 
-        current: location.pathname === '/manager',
-        icon: Users
+        name: 'Mes Demandes', 
+        href: '/requests', 
+        current: location.pathname === '/requests',
+        icon: Package
       });
     }
 
     // Add Admin Panel for admins
-    if (hasRole([ROLES.ADMIN, ROLES.SUPER_ADMIN])) {
+    if (isAdmin()) {
       navItems.push({ 
-        name: 'Admin', 
+        name: 'Administration', 
         href: '/admin', 
         current: location.pathname === '/admin',
         icon: Shield
-      });
-    }
-
-    // Add Settings if user has permission
-    if (hasPermission(PERMISSIONS.MANAGE_SETTINGS)) {
-      navItems.push({ 
-        name: 'Paramètres', 
-        href: '/settings', 
-        current: location.pathname === '/settings',
-        icon: Settings
       });
     }
 
@@ -131,12 +121,12 @@ export default function Navbar() {
                 <div className="hidden sm:block mr-4">
                   <span className={classNames(
                     'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                    user?.role === ROLES.SUPER_ADMIN ? 'bg-purple-100 text-purple-800' :
                     user?.role === ROLES.ADMIN ? 'bg-red-100 text-red-800' :
-                    user?.role === ROLES.MANAGER ? 'bg-blue-100 text-blue-800' :
+                    user?.role === ROLES.DRIVER ? 'bg-blue-100 text-blue-800' :
+                    user?.role === ROLES.SENDER ? 'bg-green-100 text-green-800' :
                     'bg-gray-100 text-gray-800'
                   )}>
-                    {user?.role?.replace('_', ' ').toUpperCase()}
+                    {user?.role?.toUpperCase()}
                   </span>
                 </div>
 
@@ -149,7 +139,7 @@ export default function Navbar() {
                       <div className="flex items-center space-x-2 px-3 py-2">
                         <UserRoundPen className="h-5 w-5 text-white" />
                         <span className="text-white text-sm font-medium">
-                          {user?.user || user?.email}
+                          {user?.name || user?.email}
                         </span>
                       </div>
                     </MenuButton>
@@ -166,14 +156,14 @@ export default function Navbar() {
                       </Link>
                     </MenuItem>
                     
-                    {hasPermission(PERMISSIONS.MANAGE_SETTINGS) && (
+                    {isAdmin() && (
                       <MenuItem>
                         <Link
-                          to="/settings"
+                          to="/admin"
                           className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           <Settings className="mr-3 h-4 w-4" />
-                          Paramètres
+                          Administration
                         </Link>
                       </MenuItem>
                     )}
@@ -238,18 +228,18 @@ export default function Navbar() {
                 <UserRoundPen className="h-6 w-6 text-gray-400" />
               </div>
               <div className="ml-3">
-                <div className="text-base font-medium text-white">{user?.user || user?.email}</div>
+                <div className="text-base font-medium text-white">{user?.name || user?.email}</div>
                 <div className="text-sm font-medium text-gray-400">{user?.email}</div>
               </div>
               <div className="ml-auto">
                 <span className={classNames(
                   'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                  user?.role === ROLES.SUPER_ADMIN ? 'bg-purple-100 text-purple-800' :
                   user?.role === ROLES.ADMIN ? 'bg-red-100 text-red-800' :
-                  user?.role === ROLES.MANAGER ? 'bg-blue-100 text-blue-800' :
+                  user?.role === ROLES.DRIVER ? 'bg-blue-100 text-blue-800' :
+                  user?.role === ROLES.SENDER ? 'bg-green-100 text-green-800' :
                   'bg-gray-100 text-gray-800'
                 )}>
-                  {user?.role?.replace('_', ' ').toUpperCase()}
+                  {user?.role?.toUpperCase()}
                 </span>
               </div>
             </div>
@@ -261,13 +251,13 @@ export default function Navbar() {
               >
                 Votre Profil
               </DisclosureButton>
-              {hasPermission(PERMISSIONS.MANAGE_SETTINGS) && (
+              {isAdmin() && (
                 <DisclosureButton
                   as={Link}
-                  to="/settings"
+                  to="/admin"
                   className="block rounded-md px-3 py-2 text-base font-medium text-gray-400 hover:bg-gray-700 hover:text-white"
                 >
-                  Paramètres
+                  Administration
                 </DisclosureButton>
               )}
               <DisclosureButton
