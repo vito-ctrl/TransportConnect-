@@ -13,6 +13,7 @@ import TrajetsPage from './pages/traject/TrajetsPage'
 import './App.css';
 import Navbar from './components/Navbar';
 import MyTrajets from './pages/traject/MyTrajets';
+import TargetForm from './pages/traject/TrajectForm'
 
 // Composants d'exemple pour démontrer la protection par rôles
 const AdminPanel = () => (
@@ -109,13 +110,13 @@ function App() {
             
             {/* Route trajets - Réservée aux conducteurs uniquement */}
             <Route 
-              path="/trajets" 
+              path="/trajetForm" 
               element={
                 <RoleProtectedRoute 
                   requiredRole={ROLES.DRIVER}
                   showFallback={true}
                 >
-                  <TrajetsPage />
+                  <TargetForm />
                 </RoleProtectedRoute>
               } 
             />

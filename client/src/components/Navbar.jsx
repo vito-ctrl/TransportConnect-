@@ -31,14 +31,20 @@ export default function Navbar() {
 
     const navItems = [
       { name: 'Dashboard', href: '/dashboard', current: location.pathname === '/dashboard' },
-      { name: 'Profil', href: '/profile', current: location.pathname === '/profile' },
+      // { name: 'Profil', href: '/profile', current: location.pathname === '/profile' },
     ];
 
     // Add Trajet page only for drivers
     if (isDriver()) {
       navItems.push({ 
-        name: 'Mes Trajets', 
-        href: '/trajets', 
+        name: 'Trajet Form', 
+        href: '/trajetForm', 
+        current: location.pathname === '/trajets',
+        icon: Truck
+      });
+      navItems.push({ 
+        name: 'My tarjet', 
+        href: '/MyTrajets', 
         current: location.pathname === '/trajets',
         icon: Truck
       });
